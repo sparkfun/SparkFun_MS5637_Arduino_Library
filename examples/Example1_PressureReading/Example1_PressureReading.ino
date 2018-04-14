@@ -18,7 +18,7 @@
 
 #include <Wire.h>
 
-#include "ms5637.h"
+#include "SparkFun_MS5637_Arduino_Library.h"
 
 MS5637 barometricSensor;
 
@@ -26,35 +26,24 @@ void setup(void) {
   Serial.begin(9600);
   Serial.println("Qwiic Pressure Sensor MS5637 Example");
 
-  if(barometricSensor.begin() == false)
+  if (barometricSensor.begin() == false)
   {
     Serial.println("MS5637 sensor did not respond. Please check wiring.");
   }
 }
 
 void loop(void) {
-  ms5637_status status;
-  float temperature;
-  float pressure;
-  boolean connected;
 
-  connected = barometricSensor.isConnected();
-  if (connected) {
-    Serial.println(connected ? "Sensor Connected" : "Sensor Disconnected");
+  float temperature = barometricSensor.getTemperature();
+  float pressure = barometricSensor.getPressure();
 
-    status = barometricSensor.read_temperature_and_pressure(&temperature, &pressure);
+  Serial.print("Temperature = ");
+  Serial.print(temperature, 1);
+  Serial.println("C");
 
-    Serial.print("---Temperature = ");
-    Serial.print(temperature, 1);
-    Serial.print((char)176);
-    Serial.println("C");
-
-    Serial.print("---Pressure = ");
-    Serial.print(pressure, 1);
-    Serial.println("hPa");
-  } else {
-    Serial.println(connected ? "Sensor Connected" : "Sensor Disconnected");
-  }
+  Serial.print("Pressure = ");
+  Serial.print(pressure, 1);
+  Serial.println("hPa");
 
   delay(1000);
 }

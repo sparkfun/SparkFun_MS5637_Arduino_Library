@@ -1,11 +1,10 @@
 #include <Wire.h>
 
-#include "ms5637.h"
+#include "SparkFun_MS5637_Arduino_Library.h"
 
 // Constants
 
-// MS5637 device address
-#define MS5637_ADDR 0x76 // 0b1110110
+const uint8_t MS5637_ADDR = 0x76; //7-bit unshifted address for the MS5637
 
 // MS5637 device commands
 #define MS5637_RESET_COMMAND 0x1E
@@ -43,12 +42,14 @@ MS5637::MS5637(void) {}
 /**
  * \brief Perform initial configuration. Has to be called once.
  */
-boolean MS5637::begin(void) {
+boolean MS5637::begin(TwoWire &wirePort) {
   _i2cPort = &wirePort; //Grab which port the user wants us to use
 
   //We expect caller to begin their I2C port, with the speed of their choice external to the library
   //But if they forget, we start the hardware here.
   _i2cPort->begin();
+
+  return(isConnected());
 }
 
 /**
@@ -362,3 +363,28 @@ enum ms5637_status MS5637::read_temperature_and_pressure(float *temperature,
 
   return status;
 }
+
+float MS5637::getPressure()
+{
+  if(pressureHasBeenRead == true)
+  {
+    //Get a new reading
+    read_temperature_and_pressure(&globalTemperature, &globalPressure);
+    temperatureHasBeenRead = false;
+  }
+  pressureHasBeenRead = true;
+  return(globalPressure);
+}
+
+float MS5637::getTemperature()
+{
+  if(temperatureHasBeenRead == true)
+  {
+    //Get a new reading
+    read_temperature_and_pressure(&globalTemperature, &globalPressure);
+    pressureHasBeenRead = false;
+  }
+  temperatureHasBeenRead = true;
+  return(globalTemperature);
+}
+

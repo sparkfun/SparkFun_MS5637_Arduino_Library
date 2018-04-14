@@ -1,5 +1,5 @@
 /*
-  This is a library written for the MS5637. Originally written by TEConnectivity 
+  This is a library written for the MS5637. Originally written by TEConnectivity
   with an MIT license. Library updated and brought to fit Arduino Library standards
   by Nathan Seidle @ SparkFun Electronics, April 13th, 2018
 
@@ -92,7 +92,7 @@ class MS5637 {
     /**
        \brief Perform initial configuration. Has to be called once.
     */
-    void begin();
+    boolean begin(TwoWire &wirePort = Wire);
 
     /**
       \brief Check whether MS5637 device is connected
@@ -138,6 +138,10 @@ class MS5637 {
     enum ms5637_status read_temperature_and_pressure(float *temperature,
         float *pressure);
 
+    float getPressure(); //Returns the latest pressure measurement
+    float getTemperature(); //Returns the latest temperature measurement
+
+
   private:
     enum ms5637_status write_command(uint8_t cmd);
     enum ms5637_status read_eeprom_coeff(uint8_t command, uint16_t *coeff);
@@ -153,6 +157,7 @@ class MS5637 {
     enum ms5637_status ms5637_conversion_and_read_adc(uint8_t, uint32_t *);
 
     enum ms5637_resolution_osr ms5637_resolution_osr;
+
     uint32_t conversion_time[6] = {
       MS5637_CONVERSION_TIME_OSR_256,  MS5637_CONVERSION_TIME_OSR_512,
       MS5637_CONVERSION_TIME_OSR_1024, MS5637_CONVERSION_TIME_OSR_2048,
@@ -160,5 +165,9 @@ class MS5637 {
     };
 
     TwoWire *_i2cPort; //The generic connection to user's chosen I2C hardware
+    float globalPressure;
+    boolean pressureHasBeenRead = true;
+    float globalTemperature;
+    boolean temperatureHasBeenRead = true;
 };
 #endif
