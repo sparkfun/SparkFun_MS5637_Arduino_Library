@@ -1,0 +1,44 @@
+#######################################
+# Syntax Coloring Map For ms5637
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ms5637	KEYWORD1
+ms5637_resolution_osr	KEYWORD1
+ms5637_status	KEYWORD1
+ms5637_status_code	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+is_connected	KEYWORD2
+set_resolution	KEYWORD2
+reset	KEYWORD2
+set_i2c_master_mode	KEYWORD2
+read_temperature_and_pressure	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+ms5637_resolution_osr_256	LITERAL1
+ms5637_resolution_osr_512	LITERAL1
+ms5637_resolution_osr_1024	LITERAL1
+ms5637_resolution_osr_2048	LITERAL1
+ms5637_resolution_osr_4096	LITERAL1
+
+ms5637_status_ok	LITERAL1
+ms5637_status_no_i2c_acknowledge	LITERAL1
+ms5637_status_i2c_transfer_error	LITERAL1
+ms5637_status_crc_error	LITERAL1
+
+ms5637_STATUS_OK	LITERAL1
+ms5637_STATUS_ERR_OVERFLOW	LITERAL1
+ms5637_STATUS_ERR_TIMEOUT	LITERAL1
+
