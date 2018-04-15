@@ -1,27 +1,26 @@
 #######################################
-# Syntax Coloring Map For ms5637
+# Syntax Coloring Map 
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-ms5637	KEYWORD1
-ms5637_resolution_osr	KEYWORD1
-ms5637_status	KEYWORD1
-ms5637_status_code	KEYWORD1
-
+MS5637	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-is_connected	KEYWORD2
-set_resolution	KEYWORD2
+begin	KEYWORD2
+isConnected	KEYWORD2
 reset	KEYWORD2
-set_i2c_master_mode	KEYWORD2
+setResolution	KEYWORD2
 read_temperature_and_pressure	KEYWORD2
-
+getPressure	KEYWORD2
+getTempterature	KEYWORD2
+adjustToSeaLevel	KEYWORD2
+altitudeChange	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
@@ -32,6 +31,7 @@ ms5637_resolution_osr_512	LITERAL1
 ms5637_resolution_osr_1024	LITERAL1
 ms5637_resolution_osr_2048	LITERAL1
 ms5637_resolution_osr_4096	LITERAL1
+ms5637_resolution_osr_8192	LITERAL1
 
 ms5637_status_ok	LITERAL1
 ms5637_status_no_i2c_acknowledge	LITERAL1

@@ -67,7 +67,8 @@ enum ms5637_resolution_osr {
   ms5637_resolution_osr_512,
   ms5637_resolution_osr_1024,
   ms5637_resolution_osr_2048,
-  ms5637_resolution_osr_4096
+  ms5637_resolution_osr_4096,
+  ms5637_resolution_osr_8192 //5
 };
 
 enum ms5637_status {
@@ -119,7 +120,7 @@ class MS5637 {
       \param[in] ms5637_resolution_osr : Resolution requested
 
     */
-    void set_resolution(enum ms5637_resolution_osr res);
+    void setResolution(enum ms5637_resolution_osr res);
 
     /**
       \brief Reads the temperature and pressure ADC value and compute the
@@ -140,7 +141,8 @@ class MS5637 {
 
     float getPressure(); //Returns the latest pressure measurement
     float getTemperature(); //Returns the latest temperature measurement
-
+    double adjustToSeaLevel(double absolutePressure, double actualAltitude);
+    double altitudeChange(double currentPressure, double baselinePressure);
 
   private:
     enum ms5637_status write_command(uint8_t cmd);
@@ -158,7 +160,7 @@ class MS5637 {
 
     enum ms5637_resolution_osr ms5637_resolution_osr;
 
-    uint32_t conversion_time[6] = {
+    uint8_t conversion_time[6] = {
       MS5637_CONVERSION_TIME_OSR_256,  MS5637_CONVERSION_TIME_OSR_512,
       MS5637_CONVERSION_TIME_OSR_1024, MS5637_CONVERSION_TIME_OSR_2048,
       MS5637_CONVERSION_TIME_OSR_4096, MS5637_CONVERSION_TIME_OSR_8192

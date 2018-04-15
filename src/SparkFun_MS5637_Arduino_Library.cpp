@@ -1,11 +1,10 @@
 #include <Wire.h>
 
-#include "ms5637.h"
+#include "SparkFun_MS5637_Arduino_Library.h"
 
 // Constants
 
-// MS5637 device address
-#define MS5637_ADDR 0x76 // 0b1110110
+const uint8_t MS5637_ADDR = 0x76; //7-bit unshifted address for the MS5637
 
 // MS5637 device commands
 #define MS5637_RESET_COMMAND 0x1E
@@ -38,13 +37,30 @@
 * \brief Class constructor
 *
 */
-ms5637::ms5637(void) {}
+MS5637::MS5637(void) {}
 
 /**
  * \brief Perform initial configuration. Has to be called once.
  */
-void ms5637::begin(void) {
-  Wire.begin();
+boolean MS5637::begin(TwoWire &wirePort) {
+  _i2cPort = &wirePort; //Grab which port the user wants us to use
+
+  //We expect caller to begin their I2C port, with the speed of their choice external to the library
+  //But if they forget, we start the hardware here.
+  _i2cPort->begin();
+
+  //Check connection
+  if(isConnected() == false) return(false);
+  
+  //Get EEPROM coefficients
+  enum ms5637_status status = read_eeprom();
+  if (status != ms5637_status_ok)
+    return(false);
+
+  //Set resolution to the highest level (17 ms per reading)
+  ms5637_resolution_osr = ms5637_resolution_osr_8192;
+  
+  return(true);
 }
 
 /**
@@ -54,9 +70,9 @@ void ms5637::begin(void) {
 *       - true : Device is present
 *       - false : Device is not acknowledging I2C address
 */
-boolean ms5637::is_connected(void) {
-  Wire.beginTransmission((uint8_t)MS5637_ADDR);
-  return (Wire.endTransmission() == 0);
+boolean MS5637::isConnected(void) {
+  _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
+  return (_i2cPort->endTransmission() == 0);
 }
 
 /**
@@ -69,12 +85,12 @@ boolean ms5637::is_connected(void) {
 *       - ms5637_status_i2c_transfer_error : Problem with i2c transfer
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 */
-enum ms5637_status ms5637::write_command(uint8_t cmd) {
+enum ms5637_status MS5637::write_command(uint8_t cmd) {
   uint8_t i2c_status;
 
-  Wire.beginTransmission((uint8_t)MS5637_ADDR);
-  Wire.write(cmd);
-  i2c_status = Wire.endTransmission();
+  _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
+  _i2cPort->write(cmd);
+  i2c_status = _i2cPort->endTransmission();
 
   /* Do the transfer */
   if (i2c_status == ms5637_STATUS_ERR_OVERFLOW)
@@ -91,7 +107,7 @@ enum ms5637_status ms5637::write_command(uint8_t cmd) {
 * \param[in] ms5637_resolution_osr : Resolution requested
 *
 */
-void ms5637::set_resolution(enum ms5637_resolution_osr res) {
+void MS5637::setResolution(enum ms5637_resolution_osr res) {
   ms5637_resolution_osr = res;
 }
 
@@ -103,7 +119,7 @@ void ms5637::set_resolution(enum ms5637_resolution_osr res) {
 *       - ms5637_status_i2c_transfer_error : Problem with i2c transfer
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 */
-enum ms5637_status ms5637::reset(void) {
+enum ms5637_status MS5637::reset(void) {
   return write_command(MS5637_RESET_COMMAND);
 }
 
@@ -119,7 +135,7 @@ enum ms5637_status ms5637::reset(void) {
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 *       - ms5637_status_crc_error : CRC check error on the coefficients
 */
-enum ms5637_status ms5637::read_eeprom_coeff(uint8_t command, uint16_t *coeff) {
+enum ms5637_status MS5637::read_eeprom_coeff(uint8_t command, uint16_t *coeff) {
   uint8_t buffer[2];
   uint8_t i;
   uint8_t i2c_status;
@@ -128,13 +144,13 @@ enum ms5637_status ms5637::read_eeprom_coeff(uint8_t command, uint16_t *coeff) {
   buffer[1] = 0;
 
   /* Read data */
-  Wire.beginTransmission((uint8_t)MS5637_ADDR);
-  Wire.write(command);
-  i2c_status = Wire.endTransmission();
+  _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
+  _i2cPort->write(command);
+  i2c_status = _i2cPort->endTransmission();
 
-  Wire.requestFrom((uint8_t)MS5637_ADDR, 2U);
+  _i2cPort->requestFrom((uint8_t)MS5637_ADDR, 2U);
   for (i = 0; i < 2; i++) {
-    buffer[i] = Wire.read();
+    buffer[i] = _i2cPort->read();
   }
   // Send the conversion command
   if (i2c_status == ms5637_STATUS_ERR_OVERFLOW)
@@ -154,7 +170,7 @@ enum ms5637_status ms5637::read_eeprom_coeff(uint8_t command, uint16_t *coeff) {
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 *       - ms5637_status_crc_error : CRC check error on the coefficients
 */
-enum ms5637_status ms5637::read_eeprom(void) {
+enum ms5637_status MS5637::read_eeprom(void) {
   enum ms5637_status status;
   uint8_t i;
 
@@ -167,8 +183,6 @@ enum ms5637_status ms5637::read_eeprom(void) {
   if (!crc_check(eeprom_coeff, (eeprom_coeff[MS5637_CRC_INDEX] & 0xF000) >> 12))
     return ms5637_status_crc_error;
 
-  coeff_read = true;
-
   return ms5637_status_ok;
 }
 
@@ -180,7 +194,7 @@ enum ms5637_status ms5637::read_eeprom(void) {
 *
 * \return bool : TRUE if CRC is OK, FALSE if KO
 */
-boolean ms5637::crc_check(uint16_t *n_prom, uint8_t crc) {
+boolean MS5637::crc_check(uint16_t *n_prom, uint8_t crc) {
   uint8_t cnt, n_bit;
   uint16_t n_rem, crc_read;
 
@@ -223,26 +237,27 @@ boolean ms5637::crc_check(uint16_t *n_prom, uint8_t crc) {
 *       - ms5637_status_i2c_transfer_error : Problem with i2c transfer
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 */
-enum ms5637_status ms5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
+enum ms5637_status MS5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
   enum ms5637_status status;
   uint8_t i2c_status;
   uint8_t buffer[3];
   uint8_t i;
 
   /* Read data */
-  Wire.beginTransmission((uint8_t)MS5637_ADDR);
-  Wire.write((uint8_t)cmd);
-  Wire.endTransmission();
+  _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
+  _i2cPort->write((uint8_t)cmd);
+  _i2cPort->endTransmission();
 
-  delay(conversion_time[(cmd & MS5637_CONVERSION_OSR_MASK) / 2]);
+  //delay(conversion_time[(cmd & MS5637_CONVERSION_OSR_MASK) / 2]);
+  delay(conversion_time[ms5637_resolution_osr]); //A simplified way of getting the conversion time
 
-  Wire.beginTransmission((uint8_t)MS5637_ADDR);
-  Wire.write((uint8_t)0x00);
-  i2c_status = Wire.endTransmission();
+  _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
+  _i2cPort->write((uint8_t)0x00);
+  i2c_status = _i2cPort->endTransmission();
 
-  Wire.requestFrom((uint8_t)MS5637_ADDR, 3U);
+  _i2cPort->requestFrom((uint8_t)MS5637_ADDR, 3U);
   for (i = 0; i < 3; i++) {
-    buffer[i] = Wire.read();
+    buffer[i] = _i2cPort->read();
   }
 
   // delay conversion depending on resolution
@@ -277,7 +292,7 @@ enum ms5637_status ms5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 *       - ms5637_status_crc_error : CRC check error on the coefficients
 */
-enum ms5637_status ms5637::read_temperature_and_pressure(float *temperature,
+enum ms5637_status MS5637::read_temperature_and_pressure(float *temperature,
                                                          float *pressure) {
   enum ms5637_status status = ms5637_status_ok;
   uint32_t adc_temperature, adc_pressure;
@@ -285,12 +300,6 @@ enum ms5637_status ms5637::read_temperature_and_pressure(float *temperature,
   int64_t OFF, SENS, P, T2, OFF2, SENS2;
   uint8_t cmd;
 
-  // If first time adc is requested, get EEPROM coefficients
-  if (coeff_read == false)
-    status = read_eeprom();
-
-  if (status != ms5637_status_ok)
-    return status;
 
   // First read temperature
   cmd = ms5637_resolution_osr * 2;
@@ -358,3 +367,46 @@ enum ms5637_status ms5637::read_temperature_and_pressure(float *temperature,
 
   return status;
 }
+
+//Returns the latest pressure reading. Will initiate a reading if data is expired
+float MS5637::getPressure()
+{
+  if(pressureHasBeenRead == true)
+  {
+    //Get a new reading
+    read_temperature_and_pressure(&globalTemperature, &globalPressure);
+    temperatureHasBeenRead = false;
+  }
+  pressureHasBeenRead = true;
+  return(globalPressure);
+}
+
+//Returns the latest temp reading. Will initiate a reading if data is expired
+float MS5637::getTemperature()
+{
+  if(temperatureHasBeenRead == true)
+  {
+    //Get a new reading
+    read_temperature_and_pressure(&globalTemperature, &globalPressure);
+    pressureHasBeenRead = false;
+  }
+  temperatureHasBeenRead = true;
+  return(globalTemperature);
+}
+
+// Given a pressure P (mb) taken at a specific altitude (meters),
+// return the equivalent pressure (mb) at sea level.
+// This produces pressure readings that can be used for weather measurements.
+// Returns pressure in mb
+double MS5637::adjustToSeaLevel(double absolutePressure, double actualAltitude)
+{
+  return(absolutePressure / pow(1-(actualAltitude/44330.0),5.255));
+}
+
+// Given a pressure measurement (mb) and the pressure at a baseline (mb),
+// return altitude change (in meters) for the delta in pressures.
+double MS5637::altitudeChange(double currentPressure, double baselinePressure)
+{
+  return(44330.0*(1-pow(currentPressure/baselinePressure,1/5.255)));
+}
+

@@ -49,7 +49,18 @@ boolean MS5637::begin(TwoWire &wirePort) {
   //But if they forget, we start the hardware here.
   _i2cPort->begin();
 
-  return(isConnected());
+  //Check connection
+  if(isConnected() == false) return(false);
+  
+  //Get EEPROM coefficients
+  enum ms5637_status status = read_eeprom();
+  if (status != ms5637_status_ok)
+    return(false);
+
+  //Set resolution to the highest level (17 ms per reading)
+  ms5637_resolution_osr = ms5637_resolution_osr_8192;
+  
+  return(true);
 }
 
 /**
@@ -96,7 +107,7 @@ enum ms5637_status MS5637::write_command(uint8_t cmd) {
 * \param[in] ms5637_resolution_osr : Resolution requested
 *
 */
-void MS5637::set_resolution(enum ms5637_resolution_osr res) {
+void MS5637::setResolution(enum ms5637_resolution_osr res) {
   ms5637_resolution_osr = res;
 }
 
@@ -172,8 +183,6 @@ enum ms5637_status MS5637::read_eeprom(void) {
   if (!crc_check(eeprom_coeff, (eeprom_coeff[MS5637_CRC_INDEX] & 0xF000) >> 12))
     return ms5637_status_crc_error;
 
-  coeff_read = true;
-
   return ms5637_status_ok;
 }
 
@@ -239,7 +248,8 @@ enum ms5637_status MS5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
   _i2cPort->write((uint8_t)cmd);
   _i2cPort->endTransmission();
 
-  delay(conversion_time[(cmd & MS5637_CONVERSION_OSR_MASK) / 2]);
+  //delay(conversion_time[(cmd & MS5637_CONVERSION_OSR_MASK) / 2]);
+  delay(conversion_time[ms5637_resolution_osr]); //A simplified way of getting the conversion time
 
   _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
   _i2cPort->write((uint8_t)0x00);
@@ -290,12 +300,6 @@ enum ms5637_status MS5637::read_temperature_and_pressure(float *temperature,
   int64_t OFF, SENS, P, T2, OFF2, SENS2;
   uint8_t cmd;
 
-  // If first time adc is requested, get EEPROM coefficients
-  if (coeff_read == false)
-    status = read_eeprom();
-
-  if (status != ms5637_status_ok)
-    return status;
 
   // First read temperature
   cmd = ms5637_resolution_osr * 2;
@@ -364,6 +368,7 @@ enum ms5637_status MS5637::read_temperature_and_pressure(float *temperature,
   return status;
 }
 
+//Returns the latest pressure reading. Will initiate a reading if data is expired
 float MS5637::getPressure()
 {
   if(pressureHasBeenRead == true)
@@ -376,6 +381,7 @@ float MS5637::getPressure()
   return(globalPressure);
 }
 
+//Returns the latest temp reading. Will initiate a reading if data is expired
 float MS5637::getTemperature()
 {
   if(temperatureHasBeenRead == true)
@@ -386,5 +392,21 @@ float MS5637::getTemperature()
   }
   temperatureHasBeenRead = true;
   return(globalTemperature);
+}
+
+// Given a pressure P (mb) taken at a specific altitude (meters),
+// return the equivalent pressure (mb) at sea level.
+// This produces pressure readings that can be used for weather measurements.
+// Returns pressure in mb
+double MS5637::adjustToSeaLevel(double absolutePressure, double actualAltitude)
+{
+  return(absolutePressure / pow(1-(actualAltitude/44330.0),5.255));
+}
+
+// Given a pressure measurement (mb) and the pressure at a baseline (mb),
+// return altitude change (in meters) for the delta in pressures.
+double MS5637::altitudeChange(double currentPressure, double baselinePressure)
+{
+  return(44330.0*(1-pow(currentPressure/baselinePressure,1/5.255)));
 }
 
