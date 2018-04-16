@@ -50,7 +50,6 @@ void setup(void) {
 //  barometricSensor.setResolution(ms5637_resolution_osr_2048); //5ms per reading, 0.028mbar resolution
 //  barometricSensor.setResolution(ms5637_resolution_osr_4096); //9ms per reading, 0.021mbar resolution
   barometricSensor.setResolution(ms5637_resolution_osr_8192); //17ms per reading, 0.016mbar resolution
-
 }
 
 void loop(void) {
@@ -78,6 +77,4 @@ void loop(void) {
 
   delay(10);
 }
-
-
 

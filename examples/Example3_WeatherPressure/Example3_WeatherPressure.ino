@@ -18,7 +18,7 @@
   For this example you'll need to know the altitude of your workbench. We used 
   https://www.freemaptools.com/elevation-finder.htm and estimated our local alittude at: 5373.6ft or 1637.9m
 
-  Then change the .adjustToSeaLevel(pressure, 1637.9) function to use your local altitude the load this code
+  Then change the localAltitude variable to be your local altitude. Then load this code
   onto your RedBoard or Uno. Open the terminal at 9600bps to see the various data. The final number
   is called "Weather Pressure" in inHg (inches Mercury).
 
@@ -35,6 +35,8 @@
 #include "SparkFun_MS5637_Arduino_Library.h"
 
 MS5637 barometricSensor;
+
+const float localAltitude = 1637.9; //Estimated local altitude 5373.6ft, 1637.9m from https://www.freemaptools.com/elevation-finder.htm
 
 void setup(void) {
   Serial.begin(9600);
@@ -67,7 +69,8 @@ void loop(void) {
   Serial.print(inHg, 3);
   Serial.print("(inHg)");
 
-  float adjustedSeaLevel = barometricSensor.adjustToSeaLevel(pressure, 1637.9); //Est local alittude: 5373.6ft, 1637.9m from https://www.freemaptools.com/elevation-finder.htm
+  //Convert the current pressure to sea-level corrected pressure 
+  float adjustedSeaLevel = barometricSensor.adjustToSeaLevel(pressure, localAltitude);
   Serial.print(" Weather Pressure=");
   Serial.print(adjustedSeaLevel, 3);
   Serial.print("(hPa)");

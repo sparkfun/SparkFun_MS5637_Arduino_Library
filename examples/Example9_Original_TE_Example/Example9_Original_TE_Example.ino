@@ -1,3 +1,6 @@
+/*
+  This is the original example provided by TE, the manufacturer of the MS5637.
+*/
 
 #include "ms5637.h"
 

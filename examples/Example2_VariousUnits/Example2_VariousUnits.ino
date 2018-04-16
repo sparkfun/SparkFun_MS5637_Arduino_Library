@@ -14,9 +14,6 @@
   Buy a board from SparkFun! https://www.sparkfun.com/products/14688
 
   This example prints the current pressure and temp in various units.
-
-  TODO:
-  output various pressure units: inHg, psi, mmHg/Torr, millibar
 */
 
 #include <Wire.h>
