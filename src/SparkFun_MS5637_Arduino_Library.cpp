@@ -51,7 +51,7 @@ boolean MS5637::begin(TwoWire &wirePort) {
 
   //Check connection
   if(isConnected() == false) return(false);
-  
+
   //Get EEPROM coefficients
   enum ms5637_status status = read_eeprom();
   if (status != ms5637_status_ok)
@@ -59,7 +59,7 @@ boolean MS5637::begin(TwoWire &wirePort) {
 
   //Set resolution to the highest level (17 ms per reading)
   ms5637_resolution_osr = ms5637_resolution_osr_8192;
-  
+
   return(true);
 }
 
@@ -238,7 +238,7 @@ boolean MS5637::crc_check(uint16_t *n_prom, uint8_t crc) {
 *       - ms5637_status_no_i2c_acknowledge : I2C did not acknowledge
 */
 enum ms5637_status MS5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
-  enum ms5637_status status;
+  enum ms5637_status status = ms5637_status_ok;
   uint8_t i2c_status;
   uint8_t buffer[3];
   uint8_t i;
@@ -261,13 +261,13 @@ enum ms5637_status MS5637::conversion_and_read_adc(uint8_t cmd, uint32_t *adc) {
   }
 
   // delay conversion depending on resolution
-  if (status != ms5637_status_ok)
-    return status;
+  //if (status != ms5637_status_ok)
+  //  return status;
 
   // Send the read command
   // status = ms5637_write_command(MS5637_READ_ADC);
-  if (status != ms5637_status_ok)
-    return status;
+  //if (status != ms5637_status_ok)
+  //  return status;
 
   if (i2c_status == ms5637_STATUS_ERR_OVERFLOW)
     return ms5637_status_no_i2c_acknowledge;
@@ -409,4 +409,3 @@ double MS5637::altitudeChange(double currentPressure, double baselinePressure)
 {
   return(44330.0*(1-pow(currentPressure/baselinePressure,1/5.255)));
 }
-
