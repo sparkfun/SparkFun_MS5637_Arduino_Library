@@ -52,6 +52,39 @@
 #include "WProgram.h"
 #endif
 
+#include "Wire.h"
+
+// Constants
+
+#define MS5637_ADDR 0x76 //7-bit unshifted address for the MS5637
+
+// MS5637 device commands
+#define MS5637_RESET_COMMAND 0x1E
+#define MS5637_START_PRESSURE_ADC_CONVERSION 0x40
+#define MS5637_START_TEMPERATURE_ADC_CONVERSION 0x50
+#define MS5637_READ_ADC 0x00
+
+#define MS5637_CONVERSION_OSR_MASK 0x0F
+
+// MS5637 commands
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_0 0xA0
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_1 0xA2
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_2 0xA4
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_3 0xA6
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_4 0xA8
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_5 0xAA
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_6 0xAC
+#define MS5637_PROM_ADDRESS_READ_ADDRESS_7 0xAE
+
+// Coefficients indexes for temperature and pressure computation
+#define MS5637_CRC_INDEX 0
+#define MS5637_PRESSURE_SENSITIVITY_INDEX 1
+#define MS5637_PRESSURE_OFFSET_INDEX 2
+#define MS5637_TEMP_COEFF_OF_PRESSURE_SENSITIVITY_INDEX 3
+#define MS5637_TEMP_COEFF_OF_PRESSURE_OFFSET_INDEX 4
+#define MS5637_REFERENCE_TEMPERATURE_INDEX 5
+#define MS5637_TEMP_COEFF_OF_TEMPERATURE_INDEX 6
+
 #define MS5637_COEFFICIENT_COUNT 7
 
 #define MS5637_CONVERSION_TIME_OSR_256 1
@@ -93,7 +126,7 @@ class MS5637 {
     /**
        \brief Perform initial configuration. Has to be called once.
     */
-    boolean begin(TwoWire &wirePort = Wire);
+    bool begin(TwoWire &wirePort = Wire);
 
     /**
       \brief Check whether MS5637 device is connected
@@ -102,7 +135,7 @@ class MS5637 {
             - true : Device is present
             - false : Device is not acknowledging I2C address
     */
-    boolean isConnected(void);
+    bool isConnected(void);
 
     /**
       \brief Reset the MS5637 device
@@ -147,7 +180,7 @@ class MS5637 {
   private:
     enum ms5637_status write_command(uint8_t cmd);
     enum ms5637_status read_eeprom_coeff(uint8_t command, uint16_t *coeff);
-    boolean crc_check(uint16_t *n_prom, uint8_t crc);
+    bool crc_check(uint16_t *n_prom, uint8_t crc);
     enum ms5637_status conversion_and_read_adc(uint8_t cmd, uint32_t *adc);
     enum ms5637_status read_eeprom(void);
 
@@ -168,8 +201,8 @@ class MS5637 {
 
     TwoWire *_i2cPort; //The generic connection to user's chosen I2C hardware
     float globalPressure;
-    boolean pressureHasBeenRead = true;
+    bool pressureHasBeenRead = true;
     float globalTemperature;
-    boolean temperatureHasBeenRead = true;
+    bool temperatureHasBeenRead = true;
 };
 #endif

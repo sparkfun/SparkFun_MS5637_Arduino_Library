@@ -2,37 +2,6 @@
 
 #include "SparkFun_MS5637_Arduino_Library.h"
 
-// Constants
-
-const uint8_t MS5637_ADDR = 0x76; //7-bit unshifted address for the MS5637
-
-// MS5637 device commands
-#define MS5637_RESET_COMMAND 0x1E
-#define MS5637_START_PRESSURE_ADC_CONVERSION 0x40
-#define MS5637_START_TEMPERATURE_ADC_CONVERSION 0x50
-#define MS5637_READ_ADC 0x00
-
-#define MS5637_CONVERSION_OSR_MASK 0x0F
-
-// MS5637 commands
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_0 0xA0
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_1 0xA2
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_2 0xA4
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_3 0xA6
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_4 0xA8
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_5 0xAA
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_6 0xAC
-#define MS5637_PROM_ADDRESS_READ_ADDRESS_7 0xAE
-
-// Coefficients indexes for temperature and pressure computation
-#define MS5637_CRC_INDEX 0
-#define MS5637_PRESSURE_SENSITIVITY_INDEX 1
-#define MS5637_PRESSURE_OFFSET_INDEX 2
-#define MS5637_TEMP_COEFF_OF_PRESSURE_SENSITIVITY_INDEX 3
-#define MS5637_TEMP_COEFF_OF_PRESSURE_OFFSET_INDEX 4
-#define MS5637_REFERENCE_TEMPERATURE_INDEX 5
-#define MS5637_TEMP_COEFF_OF_TEMPERATURE_INDEX 6
-
 /**
 * \brief Class constructor
 *
@@ -42,7 +11,7 @@ MS5637::MS5637(void) {}
 /**
  * \brief Perform initial configuration. Has to be called once.
  */
-boolean MS5637::begin(TwoWire &wirePort) {
+bool MS5637::begin(TwoWire &wirePort) {
   _i2cPort = &wirePort; //Grab which port the user wants us to use
 
   //We expect caller to begin their I2C port, with the speed of their choice external to the library
@@ -70,7 +39,7 @@ boolean MS5637::begin(TwoWire &wirePort) {
 *       - true : Device is present
 *       - false : Device is not acknowledging I2C address
 */
-boolean MS5637::isConnected(void) {
+bool MS5637::isConnected(void) {
   _i2cPort->beginTransmission((uint8_t)MS5637_ADDR);
   return (_i2cPort->endTransmission() == 0);
 }
@@ -194,7 +163,7 @@ enum ms5637_status MS5637::read_eeprom(void) {
 *
 * \return bool : TRUE if CRC is OK, FALSE if KO
 */
-boolean MS5637::crc_check(uint16_t *n_prom, uint8_t crc) {
+bool MS5637::crc_check(uint16_t *n_prom, uint8_t crc) {
   uint8_t cnt, n_bit;
   uint16_t n_rem, crc_read;
 
